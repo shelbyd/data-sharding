@@ -1,18 +1,24 @@
 require './lib/valid'
 require './lib/neighbors'
 
-def path_to(target_count, start, start_node_count = 1)
-  possibilities = [[start_node_count, [start]]]
+def path_to(start, start_node_count = 1)
+  possibilities = [start]
   while possibilities.size > 0
     possibility = possibilities.shift
     # puts "Trying possibility: #{possibility}"
-    node_count = possibility[0]
-    possibility[1][-1].with_new_node(node_count)
-    .each do |choice|
-      return possibility[1] + [choice] if node_count + 1 == target_count
-      possibilities.unshift [node_count + 1, possibility[1] + [choice]]
+    puts "Have a #{possibility.size} by #{possibility.first.size} possibility"
+    if possibility.first.size >= 420
+      puts "Found solution:"
+      possibility.each { |p| puts p.inspect }
+      break
     end
+    possibility
+      .neighbors
+      .select(&:valid?)
+      .each do |neighbor|
+        possibilities.unshift neighbor
+      end
   end
 end
 
-path_to(20, [1] * 20, 1).each { |step| puts step.inspect }
+path_to([[1]] * 7)

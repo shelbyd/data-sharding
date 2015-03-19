@@ -1,25 +1,24 @@
-require 'combinatorics/choose'
-
 class Array
-  def with_new_block(node_count)
-    (1..node_count).map { |i| self + [i] }
-  end
-
-  def with_new_node(node_count)
-    return [[]] if empty?
-    self.class.with_new_node_hash.fetch((self + [node_count]).hash) do
-      ((0...size).to_a.choose(size / (node_count + 1) + 1).to_a +
-       (0...size).to_a.choose(size / (node_count + 1)).to_a).map do |choice|
-        each_with_index.map do |assignment, index|
-          choice.include?(index) ? (node_count + 1) : assignment
-        end
+  def neighbors
+    next_rows = each_with_index.map do |row, index|
+      options_for_row(index).map do |option|
+        row + [option]
       end
-      .select { |c| c.valid_for? node_count + 1 }
-      .uniq
+    end
+
+    next_rows.drop(1).reduce([next_rows.first]) do |result, rows|
+      result.product(rows).map do |r|
+        r.first + [r.last]
+      end
     end
   end
 
-  def self.with_new_node_hash
-    @@with_new_node_hash ||= {}
+  def options_for_row(index)
+    row = self[index]
+    result = (1..index+1).to_a - row.each_slice(index + 1).to_a.last
+    result = (1..index+1).to_a if result.size == 0
+    options_for_previous_row = index == 0 ? [] : options_for_row(index - 1)
+    result
+      .select { |item| (item == index+1) || options_for_previous_row.include?(item) }
   end
 end

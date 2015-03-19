@@ -1,24 +1,28 @@
-class Array
-  def neighbors
-    next_rows = each_with_index.map do |row, index|
-      options_for_row(index).map do |option|
-        row + [option]
-      end
-    end
+require 'matrix'
 
-    next_rows.drop(1).reduce([next_rows.first]) do |result, rows|
-      result.product(rows).map do |r|
-        r.first + [r.last]
+class Matrix
+  def neighbors
+    if any?(&:nil?)
+      row_to_change, column_to_change = each_with_index.select { |e, row, col| e.nil? }.first[1..2]
+      [self[row_to_change - 1, column_to_change], row_to_change + 1]
+      .select do |choice|
+        not (row(row_to_change)
+          .each_slice(row_to_change+1)
+          .to_a
+          .select { |chunk| chunk.compact.size < row_to_change + 1 }
+          .last || [])
+          .include? choice
+      end.map do |choice|
+        clone.tap do |mat|
+          mat[row_to_change, column_to_change] = choice
+        end
       end
+    else
+      [Matrix[ *(column_vectors + Matrix.column_vector([1] + [nil] * (row_count - 1)).column_vectors) ].t]
     end
   end
 
-  def options_for_row(index)
-    row = self[index]
-    result = (1..index+1).to_a - row.each_slice(index + 1).to_a.last
-    result = (1..index+1).to_a if result.size == 0
-    options_for_previous_row = index == 0 ? [] : options_for_row(index - 1)
-    result
-      .select { |item| (item == index+1) || options_for_previous_row.include?(item) }
+  def []=(i, j, x)
+    @rows[i][j] = x
   end
 end

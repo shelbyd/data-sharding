@@ -8,26 +8,23 @@ end
 
 def run_with_possibilities(possibilities)
   count = 0
-  max_column_count = 0
+  least_nil_count = Float::INFINITY
   moving_average_remaining = 0.0
   while possibilities.size > 0
     possibility = possibilities.shift
-    # puts "Trying possibility: #{possibility}"
     count += 1
     count %= 10000
-    max_column_count = [max_column_count, possibility.column_count].max
+    least_nil_count = [least_nil_count, possibility.select(&:nil?).size].min
     moving_average_remaining = (moving_average_remaining * 99999 + possibilities.size) / 100000
     if count % 1000 == 0
-      puts "Have a #{possibility.row_count} by #{possibility.column_count} possibility"
+      if count % 10000 == 0
+        File.write('./cache.yaml', YAML.dump(possibilities))
+      end
       puts "#{moving_average_remaining.round(2)} possibilities remaining"
-      puts "Max width #{max_column_count}"
+      puts "Min nils #{least_nil_count}"
     end
 
-    if possibility.column_count >= 420
-      puts "Found solution:"
-      puts possibility
-      break
-    end
+    return possibility if possibility.none?(&:nil?)
     possibility
       .neighbors
       .each do |neighbor|
@@ -36,7 +33,11 @@ def run_with_possibilities(possibilities)
   end
 end
 
-path_to(Matrix[ *([[1]] * 11) ])
+if File.exists?('./cache.yaml')
+  run_with_possibilities(YAML.load(File.read('./cache.yaml')))
+else
+  path_to(Matrix[ *([[nil] * 37] * 7) ])
+end
 
 #  6 420
 #  7 36
